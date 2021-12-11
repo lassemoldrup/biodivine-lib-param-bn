@@ -45,8 +45,11 @@ impl GraphColoredVertices {
     }
 
     /// Approximate size of this set (error grows for large sets).
+    /// Excludes HCTL variables, works for exactly 2 HCTL vars
     pub fn approx_cardinality(&self) -> f64 {
-        self.bdd.cardinality()
+        let base: f64 = 2.; // an explicit type is required
+        let cardinality_one_set_hctl_vars = base.powf(self.state_variables.len() as f64);
+        self.bdd.cardinality() / cardinality_one_set_hctl_vars.powi(2) // we have 2 sets of vars
     }
 }
 

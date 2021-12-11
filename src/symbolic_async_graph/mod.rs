@@ -122,6 +122,7 @@ pub struct SymbolicAsyncGraph {
 pub struct SymbolicContext {
     bdd: BddVariableSet,
     state_variables: Vec<BddVariable>,
+    hctl_variables: Vec<BddVariable>,
     parameter_variables: Vec<BddVariable>,
     explicit_function_tables: Vec<FunctionTable>,
     implicit_function_tables: Vec<Option<FunctionTable>>,

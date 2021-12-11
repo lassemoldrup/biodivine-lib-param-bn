@@ -1,6 +1,6 @@
-use std::fs::read_to_string;
-use biodivine_lib_param_bn::{BooleanNetwork, symbolic_async_graph::SymbolicAsyncGraph};
+use biodivine_lib_param_bn::{symbolic_async_graph::SymbolicAsyncGraph, BooleanNetwork};
 use std::convert::TryFrom;
+use std::fs::read_to_string;
 
 fn main() {
     let filename = "aeon_models/g2a_instantiated.aeon";

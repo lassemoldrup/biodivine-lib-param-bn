@@ -29,17 +29,31 @@ impl SymbolicContext {
         // This creates "related" symbolic variables near each other.
         // We also do this in the topological order in which the variables appear
         // in the network, since this should make things easier as well...
-
         let mut state_variables: Vec<BddVariable> = Vec::new();
         let mut implicit_function_tables: Vec<Option<FunctionTable>> =
             vec![None; network.num_vars()];
         let mut explicit_function_tables: Vec<Option<FunctionTable>> =
             vec![None; network.num_parameters()];
 
+        // create also bdd variables for 2 HCTL variables
+        // that means for every prop, there will be 2 additional variables (x__propName and xx__propName)
+        let mut hctl_variables: Vec<BddVariable> = Vec::new();
+
         for variable in network.variables() {
             let variable_name = network[variable].get_name();
             let state_variable = builder.make_variable(variable_name);
             state_variables.push(state_variable);
+
+            // now add the 2 HCTL variables
+            let mut hctl_variable_name1 = "x__".to_string();
+            hctl_variable_name1.push_str(variable_name.as_str());
+            let mut hctl_variable_name2 = "xx__".to_string();
+            hctl_variable_name2.push_str(variable_name.as_str());
+            let hctl_variable1 = builder.make_variable(&hctl_variable_name1.as_str());
+            hctl_variables.push(hctl_variable1);
+            let hctl_variable2 = builder.make_variable(hctl_variable_name2.as_str());
+            hctl_variables.push(hctl_variable2);
+
             if let Some(update_function) = network.get_update_function(variable) {
                 // For explicit function, go through all parameters used in the function.
                 for parameter in update_function.collect_parameters() {
@@ -91,6 +105,7 @@ impl SymbolicContext {
         Ok(SymbolicContext {
             bdd: builder.build(),
             state_variables,
+            hctl_variables,
             parameter_variables,
             explicit_function_tables,
             implicit_function_tables,
