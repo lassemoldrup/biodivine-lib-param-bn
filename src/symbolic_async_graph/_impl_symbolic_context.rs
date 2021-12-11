@@ -119,7 +119,7 @@ impl SymbolicContext {
 
     /// Getter for variables encoding the HCTL variables.
     pub fn hctl_variables(&self) -> &Vec<BddVariable> {
-        &self.state_variables
+        &self.hctl_variables
     }
 
     /// Provides access to the raw `Bdd` context.
