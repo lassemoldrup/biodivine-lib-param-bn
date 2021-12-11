@@ -19,6 +19,10 @@ path = "src/lib.rs"
 name = "dump-graph"
 path = "src/bin/dump_graph.rs"
 
+[[bin]]
+name = "hctl_test"
+path = "src/bin/hctl_test.rs"
+
 # Enable rich docs for some online docs autogen services.
 [package.metadata.docs.rs]
 rustdoc-args = ["--html-in-header", "docs-head.html"]
