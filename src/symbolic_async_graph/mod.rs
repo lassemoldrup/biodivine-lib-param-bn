@@ -67,6 +67,7 @@ pub struct GraphColors {
 pub struct GraphColoredVertices {
     bdd: Bdd,
     state_variables: Vec<BddVariable>,
+    hctl_variables: Vec<BddVariable>,
     parameter_variables: Vec<BddVariable>,
 }
 

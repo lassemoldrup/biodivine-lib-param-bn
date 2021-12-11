@@ -112,6 +112,11 @@ impl SymbolicContext {
         })
     }
 
+    /// Gives number of sets of HCTL variables present in bdd (one set represents 1 HCTL var)
+    pub fn num_hctl_var_sets(&self) -> i32 {
+        (self.hctl_variables.len() / self.state_variables.len()) as i32
+    }
+
     /// Provides access to the raw `Bdd` context.
     pub fn bdd_variable_set(&self) -> &BddVariableSet {
         &self.bdd

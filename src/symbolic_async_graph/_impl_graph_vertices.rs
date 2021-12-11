@@ -34,11 +34,12 @@ impl GraphVertices {
     }
 
     /// Approximate size of this set (error grows for large sets).
+    /// Works also with bdds containing HCTL vars, but bdd must not depend on them atm
     pub fn approx_cardinality(&self) -> f64 {
-        let parameter_variable_count =
+        let parameter_and_hctl_variable_count =
             self.bdd.num_vars() - u16::try_from(self.state_variables.len()).unwrap();
-        let parameter_count = 2.0f64.powi(parameter_variable_count.into());
-        self.bdd.cardinality() / parameter_count
+        let parameter_times_hctl_count = 2.0f64.powi(parameter_and_hctl_variable_count.into());
+        self.bdd.cardinality() / parameter_times_hctl_count
     }
 
     /// Create an iterable view of this vertex set.
