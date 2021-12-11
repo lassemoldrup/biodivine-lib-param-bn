@@ -117,6 +117,11 @@ impl SymbolicContext {
         (self.hctl_variables.len() / self.state_variables.len()) as i32
     }
 
+    /// Getter for variables encoding the HCTL variables.
+    pub fn hctl_variables(&self) -> &Vec<BddVariable> {
+        &self.state_variables
+    }
+
     /// Provides access to the raw `Bdd` context.
     pub fn bdd_variable_set(&self) -> &BddVariableSet {
         &self.bdd
