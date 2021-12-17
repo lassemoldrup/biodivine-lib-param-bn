@@ -20,6 +20,10 @@ name = "dump-graph"
 path = "src/bin/dump_graph.rs"
 
 [[bin]]
+name = "bnet_to_aeon"
+path = "src/bin/bnet_to_aeon.rs"
+
+[[bin]]
 name = "hctl_test"
 path = "src/bin/hctl_test.rs"
 
