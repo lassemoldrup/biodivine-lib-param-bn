@@ -80,12 +80,28 @@ impl Set for GraphColoredVertices {
 
 /// Relation operations.
 impl GraphColoredVertices {
+    pub fn union_colors(&self, colors: &GraphColors) -> Self {
+        self.copy(self.bdd.or(&colors.bdd))
+    }
+
     pub fn minus_colors(&self, colors: &GraphColors) -> Self {
         self.copy(self.bdd.and_not(&colors.bdd))
     }
 
     pub fn intersect_colors(&self, colors: &GraphColors) -> Self {
         self.copy(self.bdd.and(&colors.bdd))
+    }
+
+    pub fn union_vertices(&self, vertices: &GraphVertices) -> Self {
+        self.copy(self.bdd.or(&vertices.bdd))
+    }
+
+    pub fn minus_vertices(&self, vertices: &GraphVertices) -> Self {
+        self.copy(self.bdd.and_not(&vertices.bdd))
+    }
+
+    pub fn intersect_vertices(&self, vertices: &GraphVertices) -> Self {
+        self.copy(self.bdd.and(&vertices.bdd))
     }
 
     /// For every color, pick exactly one vertex.
