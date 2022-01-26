@@ -44,15 +44,25 @@ impl SymbolicContext {
             let state_variable = builder.make_variable(variable_name);
             state_variables.push(state_variable);
 
-            // now add the 2 HCTL variables
+            // now explicitly add 4 HCTL variables with names {x^i}_varName
+            // TODO: make this automatic
             let mut hctl_variable_name1 = "x__".to_string();
             hctl_variable_name1.push_str(variable_name.as_str());
             let mut hctl_variable_name2 = "xx__".to_string();
             hctl_variable_name2.push_str(variable_name.as_str());
+            let mut hctl_variable_name3 = "xxx__".to_string();
+            hctl_variable_name3.push_str(variable_name.as_str());
+            let mut hctl_variable_name4 = "xxxx__".to_string();
+            hctl_variable_name4.push_str(variable_name.as_str());
+
             let hctl_variable1 = builder.make_variable(&hctl_variable_name1.as_str());
             hctl_variables.push(hctl_variable1);
             let hctl_variable2 = builder.make_variable(hctl_variable_name2.as_str());
             hctl_variables.push(hctl_variable2);
+            let hctl_variable3 = builder.make_variable(hctl_variable_name3.as_str());
+            hctl_variables.push(hctl_variable3);
+            let hctl_variable4 = builder.make_variable(hctl_variable_name4.as_str());
+            hctl_variables.push(hctl_variable4);
 
             if let Some(update_function) = network.get_update_function(variable) {
                 // For explicit function, go through all parameters used in the function.
