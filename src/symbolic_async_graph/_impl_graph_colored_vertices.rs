@@ -54,7 +54,6 @@ impl GraphColoredVertices {
     pub fn approx_cardinality(&self) -> f64 {
         let hctl_space_count = (2.0f64).powf(self.hctl_variables.len() as f64);
         self.bdd.cardinality() / hctl_space_count
-        self.bdd.cardinality()
     }
 }
 
