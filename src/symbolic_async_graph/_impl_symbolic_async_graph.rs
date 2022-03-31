@@ -44,6 +44,18 @@ impl SymbolicAsyncGraph {
             update_functions,
         })
     }
+
+    /// Create new graph from existing one by restricting its set of colors
+    pub fn new_restrict_colors_from_existing(
+        mut graph: SymbolicAsyncGraph,
+        restricted_colors: &GraphColors,
+    ) -> SymbolicAsyncGraph {
+        let unit_bdd = graph.unit_bdd.and(restricted_colors.as_bdd());
+        graph.unit_bdd = unit_bdd.clone();
+        graph.vertex_space.1 = GraphColoredVertices::new(unit_bdd.clone(), &graph.symbolic_context);
+        graph.color_space.1 = GraphColors::new(unit_bdd.clone(), &graph.symbolic_context);
+        graph
+    }
 }
 
 /// Examine the general properties of the graph.

@@ -23,10 +23,6 @@ path = "src/bin/dump_graph.rs"
 name = "bnet_to_aeon"
 path = "src/bin/bnet_to_aeon.rs"
 
-[[bin]]
-name = "hctl_test"
-path = "src/bin/hctl_test.rs"
-
 # Enable rich docs for some online docs autogen services.
 [package.metadata.docs.rs]
 rustdoc-args = ["--html-in-header", "docs-head.html"]
