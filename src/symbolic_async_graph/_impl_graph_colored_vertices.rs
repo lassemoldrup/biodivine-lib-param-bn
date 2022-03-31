@@ -11,6 +11,7 @@ impl GraphColoredVertices {
         GraphColoredVertices {
             bdd,
             state_variables: context.state_variables.clone(),
+            hctl_variables: context.hctl_variables.clone(),
             parameter_variables: context.parameter_variables.clone(),
         }
     }
@@ -22,6 +23,7 @@ impl GraphColoredVertices {
     pub fn copy(&self, bdd: Bdd) -> GraphColoredVertices {
         GraphColoredVertices {
             bdd,
+            hctl_variables: self.hctl_variables.clone(),
             state_variables: self.state_variables.clone(),
             parameter_variables: self.parameter_variables.clone(),
         }
@@ -48,7 +50,10 @@ impl GraphColoredVertices {
     }
 
     /// Approximate size of this set (error grows for large sets).
+    /// Excludes HCTL variables, WORKS ONLY WHEN BDD DOES NOT DEPEND ON HCTL VARS
     pub fn approx_cardinality(&self) -> f64 {
+        let hctl_space_count = (2.0f64).powf(self.hctl_variables.len() as f64);
+        self.bdd.cardinality() / hctl_space_count
         self.bdd.cardinality()
     }
 }
