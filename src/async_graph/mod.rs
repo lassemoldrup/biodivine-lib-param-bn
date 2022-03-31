@@ -3,15 +3,21 @@
 //! It represents states explicitly (see `IdState`), but uses symbolic representation (`BddParams`)
 //! for sets of parameters.
 //!
+//! **`AsyncGraph` in its current form and the related structures are deprecated in favour of
+//! `SymbolicAsyncGraph`. We may re-implement it later under a new name and a new API, because
+//! in some niche use cases it seems to be faster and/or easier to use than a fully symbolic
+//! approach. However, try not to rely on this implementation too much.**
+//!
+#![allow(deprecated)]
 
 use crate::bdd_params::{BddParameterEncoder, BddParams};
 use crate::biodivine_std::structs::{IdState, IdStateRange};
 use crate::biodivine_std::traits::{Graph, InvertibleGraph, Set};
 use crate::{BooleanNetwork, VariableId, VariableIdIterator};
 
-mod impl_async_graph;
-mod impl_default_edge_params;
-mod impl_evolution_operators;
+mod _impl_async_graph;
+mod _impl_default_edge_params;
+mod _impl_evolution_operators;
 
 /// An asynchronous transition system of a `BooleanNetwork`. The states of the graph
 /// are standard `IdState`s. The parameter sets are given by the associated `AsyncGraphEdgeParams`.
@@ -22,6 +28,12 @@ mod impl_evolution_operators;
 ///
 /// This actually hides a lot of complexity, because implementing `AsyncGraphEdgeParams` is typically
 /// much easier than re-implementing the whole async graph structure.
+///
+/// **`AsyncGraph` in its current form and the related structures are deprecated in favour of
+/// `SymbolicAsyncGraph`. We may re-implement it later under a new name and a new API, because
+/// in some niche use cases it seems to be faster than fully symbolic approach. However,
+/// try not to rely on this implementation too much.**
+#[deprecated]
 pub struct AsyncGraph<P: AsyncGraphEdgeParams> {
     edges: P,
 }

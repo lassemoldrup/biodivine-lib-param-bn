@@ -11,16 +11,17 @@ impl GraphColoredVertices {
         GraphColoredVertices {
             bdd,
             state_variables: context.state_variables.clone(),
-            hctl_variables: context.hctl_variables.clone(),
             parameter_variables: context.parameter_variables.clone(),
         }
     }
 
     /// Construct a new colored vertex set by copying the context of the current set.
+    ///
+    /// The contents of the set are completely replaced using the provided `bdd`, but the
+    /// underlying `SymbolicAsyncGraph` remains the same.
     pub fn copy(&self, bdd: Bdd) -> GraphColoredVertices {
         GraphColoredVertices {
             bdd,
-            hctl_variables: self.hctl_variables.clone(),
             state_variables: self.state_variables.clone(),
             parameter_variables: self.parameter_variables.clone(),
         }
@@ -47,11 +48,8 @@ impl GraphColoredVertices {
     }
 
     /// Approximate size of this set (error grows for large sets).
-    /// Excludes HCTL variables, works for exactly 2 HCTL vars
-    /// WORKS ONLY WHEN BDD DOES NOT DEPEND ON HCTL VARS
     pub fn approx_cardinality(&self) -> f64 {
-        let hctl_space_count = (2.0f64).powf(self.hctl_variables.len() as f64);
-        self.bdd.cardinality() / hctl_space_count
+        self.bdd.cardinality()
     }
 }
 
@@ -80,26 +78,32 @@ impl Set for GraphColoredVertices {
 
 /// Relation operations.
 impl GraphColoredVertices {
+    /// Unite with another set of `colors`.
     pub fn union_colors(&self, colors: &GraphColors) -> Self {
         self.copy(self.bdd.or(&colors.bdd))
     }
 
+    /// Remove every occurrence of a color form `colors` set.
     pub fn minus_colors(&self, colors: &GraphColors) -> Self {
         self.copy(self.bdd.and_not(&colors.bdd))
     }
 
+    /// Only retain colours in the supplied `colors` set.
     pub fn intersect_colors(&self, colors: &GraphColors) -> Self {
         self.copy(self.bdd.and(&colors.bdd))
     }
 
+    /// Unite with another set of `vertices`.
     pub fn union_vertices(&self, vertices: &GraphVertices) -> Self {
         self.copy(self.bdd.or(&vertices.bdd))
     }
 
+    /// Remove every occurrence of a vertex from `vertices`, regardless of color.
     pub fn minus_vertices(&self, vertices: &GraphVertices) -> Self {
         self.copy(self.bdd.and_not(&vertices.bdd))
     }
 
+    /// Retain only occurrences of vertices from `vertices`, regardless of color.
     pub fn intersect_vertices(&self, vertices: &GraphVertices) -> Self {
         self.copy(self.bdd.and(&vertices.bdd))
     }
