@@ -44,7 +44,7 @@
 //! // At this point, the implementation checks if there is at least one parametrisation which
 //! // satisfies all the requirements imposed by the RegulatoryGraph. If no such parametrisation
 //! // exists, an error is returned, typically also with an explanation why.
-//! let stg = SymbolicAsyncGraph::new(bn)?;
+//! let stg = SymbolicAsyncGraph::new(bn, 0)?;
 //!
 //! // Once we have a `SymbolicAsyncGraph`, we can access the `GraphVertices`, `GraphColors`
 //! // and `GraphColoredVertices`. Basic methods return a reference, `mk_*` methods create
@@ -131,7 +131,7 @@
 //! #     A -| A
 //! #     $A: C | f(A, B)
 //! # ").unwrap();
-//! # let stg = SymbolicAsyncGraph::new(bn)?;
+//! # let stg = SymbolicAsyncGraph::new(bn, 0)?;
 //! let id_b = stg.as_network().as_graph().find_variable("B").unwrap();
 //! let b_is_true = stg.fix_network_variable(id_b, true);
 //! let b_is_false = stg.fix_network_variable(id_b, false);

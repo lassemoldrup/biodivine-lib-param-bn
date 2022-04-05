@@ -8,7 +8,7 @@ use std::convert::TryInto;
 
 impl SymbolicContext {
     /// Create a new `SymbolicContext` that is based on the given `BooleanNetwork`.
-    pub fn new(network: &BooleanNetwork) -> Result<SymbolicContext, String> {
+    pub fn new(network: &BooleanNetwork, num_hctl_vars: i16) -> Result<SymbolicContext, String> {
         // First, check if the network can be encoded using u16::MAX symbolic variables:
         let symbolic_size = network_symbolic_size(network);
         if symbolic_size >= u32::from(u16::MAX) {
@@ -35,8 +35,8 @@ impl SymbolicContext {
         let mut explicit_function_tables: Vec<Option<FunctionTable>> =
             vec![None; network.num_parameters()];
 
-        // create also bdd variables for 2 HCTL variables
-        // that means for every prop, there will be 2 additional variables (x__propName and xx__propName)
+        // create also N bdd variables for HCTL variables
+        // that means for every prop, there will be N additional variables
         let mut hctl_variables: Vec<BddVariable> = Vec::new();
 
         for variable in network.variables() {
@@ -44,25 +44,16 @@ impl SymbolicContext {
             let state_variable = builder.make_variable(variable_name);
             state_variables.push(state_variable);
 
-            // now explicitly add 4 HCTL variables with names {x^i}_varName
-            // TODO: make this automatic
-            let mut hctl_variable_name1 = "x__".to_string();
-            hctl_variable_name1.push_str(variable_name.as_str());
-            let mut hctl_variable_name2 = "xx__".to_string();
-            hctl_variable_name2.push_str(variable_name.as_str());
-            let mut hctl_variable_name3 = "xxx__".to_string();
-            hctl_variable_name3.push_str(variable_name.as_str());
-            let mut hctl_variable_name4 = "xxxx__".to_string();
-            hctl_variable_name4.push_str(variable_name.as_str());
-
-            let hctl_variable1 = builder.make_variable(&hctl_variable_name1.as_str());
-            hctl_variables.push(hctl_variable1);
-            let hctl_variable2 = builder.make_variable(hctl_variable_name2.as_str());
-            hctl_variables.push(hctl_variable2);
-            let hctl_variable3 = builder.make_variable(hctl_variable_name3.as_str());
-            hctl_variables.push(hctl_variable3);
-            let hctl_variable4 = builder.make_variable(hctl_variable_name4.as_str());
-            hctl_variables.push(hctl_variable4);
+            // now add HCTL variables with names {x^i}_propName
+            let mut i = 1;
+            while i <= num_hctl_vars {
+                let mut hctl_variable_name = (0..i).map(|_| "x").collect::<String>();
+                hctl_variable_name.push_str("__");
+                hctl_variable_name.push_str(variable_name.as_str());
+                let hctl_variable = builder.make_variable(&hctl_variable_name.as_str());
+                hctl_variables.push(hctl_variable);
+                i += 1;
+            }
 
             if let Some(update_function) = network.get_update_function(variable) {
                 // For explicit function, go through all parameters used in the function.
@@ -371,7 +362,7 @@ mod tests {
     fn hmox_pathway() {
         let model = std::fs::read_to_string("aeon_models/hmox_pathway.aeon").unwrap();
         let network = BooleanNetwork::try_from(model.as_str()).unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert!(!graph.unit_colored_vertices().is_empty());
     }
 }

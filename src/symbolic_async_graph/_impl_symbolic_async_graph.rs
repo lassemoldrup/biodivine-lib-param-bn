@@ -9,8 +9,8 @@ use biodivine_lib_bdd::{bdd, BddVariable};
 use std::collections::HashMap;
 
 impl SymbolicAsyncGraph {
-    pub fn new(network: BooleanNetwork) -> Result<SymbolicAsyncGraph, String> {
-        let context = SymbolicContext::new(&network)?;
+    pub fn new(network: BooleanNetwork, num_hctl_vars: i16) -> Result<SymbolicAsyncGraph, String> {
+        let context = SymbolicContext::new(&network, num_hctl_vars)?;
         let unit_bdd = apply_regulation_constraints(context.bdd.mk_true(), &network, &context)?;
 
         // For each variable, pre-compute contexts where the update function can be applied, i.e.
@@ -375,7 +375,7 @@ impl SymbolicAsyncGraph {
         }
 
         // 5. Check that the sub-network is valid.
-        let sub_network_graph = SymbolicAsyncGraph::new(sub_network.clone());
+        let sub_network_graph = SymbolicAsyncGraph::new(sub_network.clone(), 0);
         if sub_network_graph.is_err() {
             return Err("Sub-network is not consistent with the regulatory graph.".to_string());
         }
@@ -452,7 +452,7 @@ mod tests {
         ",
         )
         .unwrap();
-        let sg = SymbolicAsyncGraph::new(network_1).unwrap();
+        let sg = SymbolicAsyncGraph::new(network_1, 0).unwrap();
 
         assert_eq!(
             sg.mk_unit_colors(),
@@ -496,7 +496,7 @@ mod tests {
         let sub_colors = sg.mk_subnetwork_colors(&network_3).unwrap();
         assert_eq!(2.0, sub_colors.approx_cardinality());
 
-        let sg_2 = SymbolicAsyncGraph::new(network_2).unwrap();
+        let sg_2 = SymbolicAsyncGraph::new(network_2, 0).unwrap();
         let sub_colors = sg_2.mk_subnetwork_colors(&network_3).unwrap();
         assert_eq!(2.0, sub_colors.approx_cardinality());
 
@@ -651,22 +651,22 @@ mod tests {
     #[test]
     fn test_constraints_1() {
         let network = BooleanNetwork::try_from("a -> t \n $a: true").unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(1.0, graph.unit_colors().approx_cardinality());
         let network = BooleanNetwork::try_from("a -| t \n $a: true").unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(1.0, graph.unit_colors().approx_cardinality());
         let network = BooleanNetwork::try_from("a ->? t \n $a: true").unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(3.0, graph.unit_colors().approx_cardinality());
         let network = BooleanNetwork::try_from("a -|? t \n $a: true").unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(3.0, graph.unit_colors().approx_cardinality());
         let network = BooleanNetwork::try_from("a -? t \n $a: true").unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(2.0, graph.unit_colors().approx_cardinality());
         let network = BooleanNetwork::try_from("a -?? t \n $a: true").unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(4.0, graph.unit_colors().approx_cardinality());
     }
 
@@ -684,7 +684,7 @@ mod tests {
             $a: true \n $b: true
         ";
         let network = BooleanNetwork::try_from(network).unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(3.0, graph.unit_colors().approx_cardinality());
     }
 
@@ -697,7 +697,7 @@ mod tests {
             $a: true \n $b: true
         ";
         let network = BooleanNetwork::try_from(network).unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(6.0, graph.unit_colors().approx_cardinality());
     }
 
@@ -708,7 +708,7 @@ mod tests {
             $a: true \n $b: true \n $c: true
         ";
         let network = BooleanNetwork::try_from(network).unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(20.0, graph.unit_colors().approx_cardinality());
     }
 
@@ -719,7 +719,7 @@ mod tests {
             $a: true \n $b: true \n $c: true \n $d: true
         ";
         let network = BooleanNetwork::try_from(network).unwrap();
-        let graph = SymbolicAsyncGraph::new(network).unwrap();
+        let graph = SymbolicAsyncGraph::new(network, 0).unwrap();
         assert_eq!(168.0, graph.unit_colors().approx_cardinality());
     }
 
@@ -730,7 +730,7 @@ mod tests {
             $a: true \n $b: true \n $t: b
         ";
         let network = BooleanNetwork::try_from(network).unwrap();
-        let graph = SymbolicAsyncGraph::new(network);
+        let graph = SymbolicAsyncGraph::new(network, 0);
         assert!(graph.is_err());
     }
 
@@ -748,7 +748,7 @@ mod tests {
         ",
         )
         .unwrap();
-        let graph = SymbolicAsyncGraph::new(bn).unwrap();
+        let graph = SymbolicAsyncGraph::new(bn, 0).unwrap();
         let a = graph.as_network().as_graph().find_variable("A").unwrap();
         let c = graph.as_network().as_graph().find_variable("C").unwrap();
         let sub_space_a = graph.fix_network_variable(a, true);
@@ -781,7 +781,7 @@ mod tests {
         ",
         )
         .unwrap();
-        let stg = SymbolicAsyncGraph::new(bn).unwrap();
+        let stg = SymbolicAsyncGraph::new(bn, 0).unwrap();
         assert_eq!(32.0, stg.unit_colored_vertices().approx_cardinality());
         assert_eq!(
             8.0,

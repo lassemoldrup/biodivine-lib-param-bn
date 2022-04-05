@@ -316,7 +316,7 @@ mod tests {
         ",
         )
         .unwrap();
-        let stg = SymbolicAsyncGraph::new(bn).unwrap();
+        let stg = SymbolicAsyncGraph::new(bn, 0).unwrap();
         let id_b = stg.as_network().as_graph().find_variable("B").unwrap();
         let b_is_true = stg.fix_network_variable(id_b, true);
         let b_is_false = stg.fix_network_variable(id_b, false);

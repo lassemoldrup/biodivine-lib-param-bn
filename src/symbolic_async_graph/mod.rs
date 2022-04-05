@@ -206,7 +206,7 @@ mod tests {
         ",
         )
         .unwrap();
-        let stg = SymbolicAsyncGraph::new(bn).unwrap();
+        let stg = SymbolicAsyncGraph::new(bn, 0).unwrap();
         let components = scc(&stg);
         assert_eq!(7, components.len());
         assert_eq!(2.0, components[0].vertices().approx_cardinality());
