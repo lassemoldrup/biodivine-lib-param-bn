@@ -153,7 +153,7 @@ impl BooleanNetwork {
         self.graph.num_vars()
     }
 
-    /// The number of parameters in this `BooleanNetwork`.
+    /// The number of explicit parameters in this `BooleanNetwork`.
     pub fn num_parameters(&self) -> usize {
         self.parameters.len()
     }

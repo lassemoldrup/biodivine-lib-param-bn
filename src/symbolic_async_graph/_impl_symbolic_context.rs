@@ -150,6 +150,9 @@ impl SymbolicContext {
         &self.explicit_function_tables[parameter.0]
     }
 
+    /// Gives number of all parameter variables in the network (both explicit and implicit).
+    pub fn num_parameter_vars(&self) -> i32 { self.parameter_variables.len() as i32 }
+
     /// Getter for variables encoding the parameter variables of the network.
     pub fn parameter_variables(&self) -> &Vec<BddVariable> {
         &self.parameter_variables
