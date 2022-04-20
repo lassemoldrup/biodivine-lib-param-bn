@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code)] // avoid warnings related to the "loggin" feature
 
 use std::convert::TryFrom;
 use std::io::Read;
@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use biodivine_lib_param_bn::biodivine_std::traits::Set;
 use biodivine_lib_param_bn::decomposition::Counter;
-use biodivine_lib_param_bn::stats::{StatGraphColoredVertices, StatSymbolicAsyncGraph, Stats};
+use biodivine_lib_param_bn::stats::*;
 use biodivine_lib_param_bn::symbolic_async_graph::SymbolicAsyncGraph;
 use biodivine_lib_param_bn::BooleanNetwork;
 
@@ -16,6 +16,7 @@ struct ColoredSpineSet {
 }
 
 fn main() {
+    let model_load_start = Instant::now();
     let mut buffer = String::new();
     std::io::stdin().read_to_string(&mut buffer).unwrap();
 
@@ -29,9 +30,20 @@ fn main() {
         graph.unit_colored_vertices().approx_cardinality(),
         graph.unit_colors().approx_cardinality()
     );
+    let model_load_elapsed = model_load_start.elapsed();
 
+    let algo_start = Instant::now();
     let count = find_sccs(&graph);
+    let algo_elapsed = algo_start.elapsed();
+
+    #[cfg(feature = "logging")]
+    Stats::print();
     println!("Counted: {}", count);
+    println!(
+        "Loading model time: {}ms; Algorithm running time: {}ms",
+        model_load_elapsed.as_millis(),
+        algo_elapsed.as_millis()
+    );
 }
 
 fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
@@ -114,7 +126,6 @@ fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
 
         _reach += _start_reach.elapsed().as_millis();
 
-        // ================ yoinked
         let non_pivot_states = &sccs.minus(&pivot);
         let non_trivial_colors = non_pivot_states.colors();
         #[cfg(feature = "logging")]
@@ -129,7 +140,6 @@ fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
             #[cfg(feature = "logging")]
             println!("TRIVIAL.");
         }
-        // ================
 
         // first recursive call
         let new_universe = universe.minus(&fw);
@@ -158,12 +168,12 @@ fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
         #[cfg(feature = "logging")]
         println!("SPLIT: {} - {}", _universe1_size, _universe2_size);
 
+        #[cfg(feature = "logging")]
         Stats::inc_iterations();
     }
 
     #[cfg(feature = "logging")]
     counter.print();
-    Stats::print();
     counter.len()
 }
 
@@ -223,6 +233,7 @@ fn skel_forward(
     (fw, new_spine_set)
 }
 
+// Equivalent to the trim function in algo_lockstep.rs
 fn trim(
     graph: &StatSymbolicAsyncGraph,
     mut set: StatGraphColoredVertices,

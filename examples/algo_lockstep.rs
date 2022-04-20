@@ -1,11 +1,14 @@
 use biodivine_lib_param_bn::biodivine_std::traits::Set;
 use biodivine_lib_param_bn::decomposition::Counter;
-use biodivine_lib_param_bn::symbolic_async_graph::{GraphColoredVertices, SymbolicAsyncGraph};
+use biodivine_lib_param_bn::stats::*;
+use biodivine_lib_param_bn::symbolic_async_graph::SymbolicAsyncGraph;
 use biodivine_lib_param_bn::BooleanNetwork;
 use std::convert::TryFrom;
 use std::io::Read;
+use std::time::Instant;
 
 fn main() {
+    let model_load_start = Instant::now();
     let mut buffer = String::new();
     std::io::stdin().read_to_string(&mut buffer).unwrap();
 
@@ -13,16 +16,29 @@ fn main() {
     println!("Model vars: {}", model.as_graph().num_vars());
 
     let graph = SymbolicAsyncGraph::new(model).unwrap();
+    let graph = StatSymbolicAsyncGraph::new(graph);
     println!(
         "Graph size: {} (Colors {})",
         graph.unit_colored_vertices().approx_cardinality(),
         graph.unit_colors().approx_cardinality()
     );
+    let model_load_elapsed = model_load_start.elapsed();
+
+    let algo_start = Instant::now();
     let count = decomposition(&graph);
+    let algo_elapsed = algo_start.elapsed();
+
+    #[cfg(feature = "logging")]
+    Stats::print();
     println!("Counted: {}", count);
+    println!(
+        "Loading model time: {}ms; Algorithm running time: {}ms",
+        model_load_elapsed.as_millis(),
+        algo_elapsed.as_millis()
+    );
 }
 
-fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
+fn decomposition(graph: &StatSymbolicAsyncGraph) -> usize {
     let mut counter = Counter::new(graph);
 
     let mut universes = vec![(
@@ -30,34 +46,38 @@ fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
         graph.as_network().variables().next().unwrap(),
     )];
 
-    let start = std::time::SystemTime::now();
-    let mut trimming = 0;
-    let mut reach = 0;
+    let _start = Instant::now();
+    let mut _trimming = 0;
+    let mut _reach = 0;
     while let Some((universe, base)) = universes.pop() {
-        let remaining: f64 = universes.iter().map(|u| u.0.approx_cardinality()).sum();
-        println!(
-            "Universes: {}; SCCs: {}; Remaining: {}/{}",
-            universes.len(),
-            counter.len(),
-            remaining + universe.approx_cardinality(),
-            graph.unit_colored_vertices().approx_cardinality()
-        );
-        println!(
-            "Elapsed: {}; Trim: {}; Reach: {};",
-            start.elapsed().unwrap().as_millis(),
-            trimming,
-            reach
-        );
-        let start_trim = std::time::SystemTime::now();
+        #[cfg(feature = "logging")]
+        {
+            let remaining: f64 = universes.iter().map(|u| u.0.approx_cardinality()).sum();
+            println!(
+                "Universes: {}; SCCs: {}; Remaining: {}/{}",
+                universes.len(),
+                counter.len(),
+                remaining + universe.approx_cardinality(),
+                graph.unit_colored_vertices().approx_cardinality()
+            );
+            println!(
+                "Elapsed: {}; Trim: {}; Reach: {};",
+                _start.elapsed().as_millis(),
+                _trimming,
+                _reach
+            );
+        }
+        let _start_trim = Instant::now();
         let universe = &trim(graph, universe);
-        trimming += start_trim.elapsed().unwrap().as_millis();
+        _trimming += _start_trim.elapsed().as_millis();
         if universe.is_empty() {
+            #[cfg(feature = "logging")]
             println!("NO SCC");
             continue;
         }
 
         let pivot = &universe.pick_vertex();
-        let start_reach = std::time::SystemTime::now();
+        let _start_reach = Instant::now();
 
         let mut fwd = pivot.clone();
         let mut bwd = pivot.clone();
@@ -86,6 +106,7 @@ fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
                 remaining = remaining.intersect(&next_bwd.colors());
                 bwd = bwd.union(&next_bwd);
 
+                #[cfg(feature = "logging")]
                 if fwd.as_bdd().size() > 100_000 || bwd.as_bdd().size() > 100_000 {
                     println!("Remaining: {}", remaining.approx_cardinality());
                     println!(
@@ -112,6 +133,8 @@ fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
                     .minus(&bwd);
                 todo_bwd = next_bwd.colors();
                 bwd = bwd.union(&next_bwd);
+
+                #[cfg(feature = "logging")]
                 if bwd.as_bdd().size() > 100_000 {
                     println!("BWD {} ({})", bwd.approx_cardinality(), bwd.as_bdd().size());
                 }
@@ -125,6 +148,8 @@ fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
                     .minus(&fwd);
                 todo_fwd = next_fwd.colors();
                 fwd = fwd.union(&next_fwd);
+
+                #[cfg(feature = "logging")]
                 if fwd.as_bdd().size() > 100_000 {
                     println!(
                         "FWD: {} ({})",
@@ -135,11 +160,12 @@ fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
             }
         }
 
-        reach += start_reach.elapsed().unwrap().as_millis();
+        _reach += _start_reach.elapsed().as_millis();
 
         let scc = &fwd.intersect(&bwd);
         let non_pivot_states = &scc.minus(&pivot);
         let non_trivial_colors = non_pivot_states.colors();
+        #[cfg(feature = "logging")]
         println!(
             "SCC: {} ({} vertices)",
             scc.approx_cardinality(),
@@ -148,6 +174,7 @@ fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
         if !non_trivial_colors.is_empty() {
             counter.push(&non_trivial_colors);
         } else {
+            #[cfg(feature = "logging")]
             println!("TRIVIAL.");
         }
 
@@ -156,6 +183,7 @@ fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
         let converged = fwd_converged.union(&bwd_converged).minus(&scc);
         let rest = universe.minus(&converged).minus(&scc);
 
+        #[cfg(feature = "logging")]
         println!(
             "SPLIT: {} - {}",
             rest.approx_cardinality(),
@@ -169,13 +197,20 @@ fn decomposition(graph: &SymbolicAsyncGraph) -> usize {
         if !converged.is_empty() {
             universes.push((converged, base));
         }
+
+        #[cfg(feature = "logging")]
+        Stats::inc_iterations();
     }
 
+    #[cfg(feature = "logging")]
     counter.print();
     counter.len()
 }
 
-fn trim(graph: &SymbolicAsyncGraph, mut set: GraphColoredVertices) -> GraphColoredVertices {
+fn trim(
+    graph: &StatSymbolicAsyncGraph,
+    mut set: StatGraphColoredVertices,
+) -> StatGraphColoredVertices {
     //let initial = set.as_bdd().size();
     //println!("Start trim: {}", initial);
     loop {
@@ -188,6 +223,7 @@ fn trim(graph: &SymbolicAsyncGraph, mut set: GraphColoredVertices) -> GraphColor
             // set == post
             break;
         }
+        #[cfg(feature = "logging")]
         if set.as_bdd().size() > 10_000 {
             println!(
                 "TRIM: {}; {}",
@@ -210,6 +246,7 @@ fn trim(graph: &SymbolicAsyncGraph, mut set: GraphColoredVertices) -> GraphColor
             // set == pre
             break;
         }
+        #[cfg(feature = "logging")]
         if set.as_bdd().size() > 10_000 {
             println!(
                 "TRIM: {}; {}",
