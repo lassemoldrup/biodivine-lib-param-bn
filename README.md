@@ -1,4 +1,9 @@
-# Biodivine PBN Library (Symbolic SCC)
+# [Fork] Biodivine PBN Library (Symbolic SCC)
+Forked from: https://github.com/sybila/biodivine-lib-param-bn/tree/lmcs
+
+This fork adds a linear algorithm for computing SCCs in colored graphs as part of our bachelor project.
+
+## Original README
 
 Rust library for working with parametrised Boolean networks. 
 
