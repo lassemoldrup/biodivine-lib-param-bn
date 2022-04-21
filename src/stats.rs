@@ -106,6 +106,7 @@ impl Stats {
 
 macro_rules! ops {
     ($( fn $name:ident ( $inc:ident, other: $other_ty:ty ); )+) => {
+        #[inline]
         $(pub fn $name(&self, other: $other_ty) -> Self {
             #[cfg(feature = "logging")]
             {
@@ -147,6 +148,7 @@ impl StatGraphColoredVertices {
         fn minus_colors(inc_minus_count, other: &GraphColors);
     }
 
+    #[inline]
     pub fn pick_vertex(&self) -> Self {
         #[cfg(feature = "logging")]
         {
@@ -170,18 +172,22 @@ pub struct StatSymbolicAsyncGraph {
 }
 
 impl StatSymbolicAsyncGraph {
+    #[inline]
     pub fn new(graph: SymbolicAsyncGraph) -> Self {
         Self { graph }
     }
 
+    #[inline]
     pub fn mk_empty_vertices(&self) -> StatGraphColoredVertices {
         StatGraphColoredVertices::new(self.graph.mk_empty_vertices())
     }
 
+    #[inline]
     pub fn mk_unit_colored_vertices(&self) -> StatGraphColoredVertices {
         StatGraphColoredVertices::new(self.graph.mk_unit_colored_vertices())
     }
 
+    #[inline]
     pub fn pre(&self, initial: &StatGraphColoredVertices) -> StatGraphColoredVertices {
         #[cfg(feature = "logging")]
         {
@@ -191,6 +197,7 @@ impl StatSymbolicAsyncGraph {
         StatGraphColoredVertices::new(self.graph.pre(initial))
     }
 
+    #[inline]
     pub fn post(&self, initial: &StatGraphColoredVertices) -> StatGraphColoredVertices {
         #[cfg(feature = "logging")]
         {
