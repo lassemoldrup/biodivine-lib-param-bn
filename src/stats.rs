@@ -24,7 +24,7 @@ pub struct Stats {
     avg_bdd_size: Cell<f64>,
 }
 
-//#[cfg(feature = "logging")]
+#[cfg(feature = "logging")]
 impl Stats {
     thread_local! {
         static STATS: Stats = Stats::default();
