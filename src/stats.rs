@@ -15,12 +15,16 @@ pub struct Stats {
     post_count: Cell<u64>,
     pre_count: Cell<u64>,
     total_symbolic_steps: Cell<u64>,
+    trim_mode: Cell<bool>,
+    trim_intersect_count: Cell<u64>,
+    trim_post_count: Cell<u64>,
+    trim_pre_count: Cell<u64>,
     max_bdd_size: Cell<usize>,
     total_bdds: Cell<u64>,
     avg_bdd_size: Cell<f64>,
 }
 
-#[cfg(feature = "logging")]
+//#[cfg(feature = "logging")]
 impl Stats {
     thread_local! {
         static STATS: Stats = Stats::default();
@@ -28,6 +32,10 @@ impl Stats {
 
     pub fn inc_iterations() {
         Self::STATS.with(|s| s.iterations.set(s.iterations.get() + 1));
+    }
+
+    pub fn toggle_trim_mode() {
+        Self::STATS.with(|s| s.trim_mode.set(!s.trim_mode.get()));
     }
 
     pub fn print() {
@@ -57,6 +65,16 @@ impl Stats {
             println!("------------------------------------------");
             println!("| Total steps     | {:20} |", s.total_symbolic_steps.get());
             println!("------------------------------------------");
+            println!("|             TRIMMING STEPS             |");
+            println!("------------------------------------------");
+            println!("| Intersect steps | {:20} |", s.trim_intersect_count.get());
+            println!("------------------------------------------");
+            println!("| Post steps      | {:20} |", s.trim_post_count.get());
+            println!("------------------------------------------");
+            println!("| Pre steps       | {:20} |", s.trim_pre_count.get());
+            println!("------------------------------------------");
+            println!("| Total trimming  | {:20} |", s.total_trimming_steps());
+            println!("------------------------------------------");
         });
     }
 
@@ -69,7 +87,12 @@ impl Stats {
     }
 
     fn inc_intersect_count() {
-        Self::STATS.with(|s| s.intersect_count.set(s.intersect_count.get() + 1));
+        Self::STATS.with(|s| {
+            if s.trim_mode.get() {
+                s.trim_intersect_count.set(s.trim_intersect_count.get() + 1)
+            }
+            s.intersect_count.set(s.intersect_count.get() + 1)
+        });
     }
 
     fn inc_minus_count() {
@@ -81,11 +104,25 @@ impl Stats {
     }
 
     fn inc_post_count() {
-        Self::STATS.with(|s| s.post_count.set(s.post_count.get() + 1));
+        Self::STATS.with(|s| {
+            if s.trim_mode.get() {
+                s.trim_post_count.set(s.trim_post_count.get() + 1)
+            }
+            s.post_count.set(s.post_count.get() + 1)
+        });
     }
 
     fn inc_pre_count() {
-        Self::STATS.with(|s| s.pre_count.set(s.pre_count.get() + 1));
+        Self::STATS.with(|s| {
+            if s.trim_mode.get() {
+                s.trim_pre_count.set(s.trim_pre_count.get() + 1)
+            }
+            s.pre_count.set(s.pre_count.get() + 1)
+        });
+    }
+
+    fn total_trimming_steps(&self) -> u64 {
+        self.trim_intersect_count.get() + self.trim_post_count.get() + self.trim_pre_count.get()
     }
 
     fn update_bdd_size(_size: usize) {

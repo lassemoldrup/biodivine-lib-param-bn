@@ -211,6 +211,8 @@ fn trim(
     graph: &StatSymbolicAsyncGraph,
     mut set: StatGraphColoredVertices,
 ) -> StatGraphColoredVertices {
+    Stats::toggle_trim_mode();
+
     //let initial = set.as_bdd().size();
     //println!("Start trim: {}", initial);
     loop {
@@ -260,5 +262,6 @@ fn trim(
         //}
     }
 
+    Stats::toggle_trim_mode();
     set
 }
