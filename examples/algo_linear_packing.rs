@@ -1,5 +1,6 @@
 #![allow(dead_code)] // avoid warnings related to the "logging" feature
 
+use std::collections::VecDeque;
 use std::convert::TryFrom;
 use std::io::Read;
 use std::time::Instant;
@@ -47,7 +48,7 @@ fn main() {
 }
 
 fn push_args(
-    universes: &mut Vec<(StatGraphColoredVertices, ColoredSpineSet)>,
+    universes: &mut VecDeque<(StatGraphColoredVertices, ColoredSpineSet)>,
     mut universe: StatGraphColoredVertices,
     mut spine_set: ColoredSpineSet,
 ) {
@@ -67,9 +68,8 @@ fn push_args(
         }
     }
     if !universe.is_empty() {
-        universes.push((universe, spine_set));
+        universes.push_back((universe, spine_set));
     }
-    universes.sort_by_cached_key(|(u, _)| u.colors().approx_cardinality() as u128);
 }
 
 fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
@@ -81,12 +81,12 @@ fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
         pivot: graph.mk_empty_vertices(),
     };
 
-    let mut universes = vec![(vertices, spine_set)];
+    let mut universes = VecDeque::from(vec![(vertices, spine_set)]);
 
     let _start = Instant::now();
     let mut _trimming = 0;
     let mut _reach = 0;
-    while let Some((universe, spine_set)) = universes.pop() {
+    while let Some((universe, spine_set)) = universes.pop_front() {
         #[cfg(feature = "logging")]
         {
             let remaining: f64 = universes.iter().map(|u| u.0.approx_cardinality()).sum();
