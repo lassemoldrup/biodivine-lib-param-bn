@@ -46,6 +46,32 @@ fn main() {
     );
 }
 
+fn push_args(
+    universes: &mut Vec<(StatGraphColoredVertices, ColoredSpineSet)>,
+    mut universe: StatGraphColoredVertices,
+    mut spine_set: ColoredSpineSet,
+) {
+    for (u, s) in universes.iter_mut() {
+        let extra_colors = universe.colors().minus(&u.colors());
+
+        *u = u.union(&universe.intersect_colors(&extra_colors));
+        universe = universe.minus_colors(&extra_colors);
+
+        s.pivot = s.pivot.union(&s.pivot.intersect_colors(&extra_colors));
+        s.spine = s.spine.union(&s.spine.intersect_colors(&extra_colors));
+        spine_set.pivot = spine_set.pivot.minus_colors(&extra_colors);
+        spine_set.spine = spine_set.spine.minus_colors(&extra_colors);
+
+        if universe.is_empty() {
+            break;
+        }
+    }
+    if !universe.is_empty() {
+        universes.push((universe, spine_set));
+    }
+    universes.sort_by_cached_key(|(u, _)| u.colors().approx_cardinality() as u128);
+}
+
 fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
     let mut counter = Counter::new(graph);
     let vertices = graph.mk_unit_colored_vertices();
@@ -151,7 +177,7 @@ fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
             pivot: new_pivot,
         };
         if !new_universe.is_empty() {
-            universes.push((new_universe, new_spine_set));
+            push_args(&mut universes, new_universe, new_spine_set);
         }
 
         // second recursive call
@@ -162,7 +188,7 @@ fn find_sccs(graph: &StatSymbolicAsyncGraph) -> usize {
             pivot: fw_spine_set.pivot.minus(&sccs),
         };
         if !new_universe.is_empty() {
-            universes.push((new_universe, new_spine_set));
+            push_args(&mut universes, new_universe, new_spine_set);
         }
 
         #[cfg(feature = "logging")]
